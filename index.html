@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Scanner – Event Check-in</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 350px;
+      margin: 20px auto;
+      border: 2px solid #000;
+      background: #000;
+    }
+
+    #result {
+      font-size: 20px;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      background: #007bff;
+      color: white;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    #uploadInput {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>QR Scanner Check-in</h2>
+
+  <div id="reader"></div>
+  <div id="result"></div>
+
+  <button onclick="startCamera()">Start Camera</button>
+
+  <h3>OR Upload QR Code Image</h3>
+  <input type="file" id="uploadInput" accept="image/*" />
+
+  <!-- QR Library -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzloJ1lQfW2GaO_bd1GDLGERNij0lb4ZIDAVlkw_TfV1WuhjjWuDiF0fH210T0qL8Cqfw/exec";
+    let html5QrCode;
+
+    function validateToken(token) {
+      const resultEl = document.getElementById("result");
+      resultEl.innerHTML = "Validating...";
+
+      fetch(scriptURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // ✅ Send key as 'data' to match backend
+        body: JSON.stringify({ data: token })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "success") {
+          resultEl.style.color = "green";
+          resultEl.textContent = "✔ Check-In Successful!";
+        } else if (data.status === "already") {
+          resultEl.style.color = "orange";
+          resultEl.textContent = "⚠ Already Checked-In!";
+        } else {
+          resultEl.style.color = "red";
+          resultEl.textContent = "❌ Invalid Token!";
+        }
+      })
+      .catch(err => {
+        resultEl.style.color = "red";
+        resultEl.textContent = "Server Error!";
+        console.error(err);
+      });
+    }
+
+    function startCamera() {
+      try {
+        if (html5QrCode) html5QrCode.stop();
+
+        html5QrCode = new Html5Qrcode("reader");
+
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          (qrMessage) => {
+            document.getElementById("result").innerHTML = "Scanned: " + qrMessage;
+            html5QrCode.stop();
+            validateToken(qrMessage);
+          },
+          (errorMessage) => {
+            console.log("Scan error:", errorMessage);
+          }
+        );
+      } catch (err) {
+        alert("Camera Error: " + err);
+      }
+    }
+
+    // Image Upload Scanner
+    document.getElementById("uploadInput").addEventListener("change", function () {
+      if (!this.files.length) return;
+      const file = this.files[0];
+
+      Html5Qrcode.scanFile(file, true)
+        .then(decoded => {
+          document.getElementById("result").innerHTML = "Scanned: " + decoded;
+          validateToken(decoded);
+        })
+        .catch(err => {
+          alert("Image Scan Error: " + err);
+        });
+    });
+  </script>
+
+</body>
+</html>
