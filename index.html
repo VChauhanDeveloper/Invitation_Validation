@@ -56,43 +56,52 @@
   <h3>OR Upload QR Code Image</h3>
   <input type="file" id="uploadInput" accept="image/*" />
 
-  <!-- QR Library -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbxYKt4Vs7NLNchqxXqYSrtQbNo8Md9mCVfcsd6mTJDnWTyJLt2wb5S8JcMt4Mk4Qxg3EA/exec";
+    // 👉 YOUR GOOGLE SCRIPT URL (GET method only)
+    const scriptURL = "https://script.google.com/macros/s/AKfycbxlN_r2sBJHquO7mvS3wjwulL4Ywwd-0nNH0ZMiaRlO11tmMnCp_c2wx4eMj7_nD_Bthw/exec";
+
     let html5QrCode;
 
-   function validateQR(qrText) {
-  fetch(scriptURL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ qr: qrText })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.status === "success") {
-      result.innerHTML = "✔ Check-In Successful!";
-      result.style.color = "green";
-    } else if (data.status === "already") {
-      result.innerHTML = "⚠ Already Checked-In!";
-      result.style.color = "orange";
-    } else if (data.status === "invalid") {
-      result.innerHTML = "❌ Invalid QR!";
-      result.style.color = "red";
-    } else {
-      result.innerHTML = "❌ Server Error!";
-      result.style.color = "red";
+    // -------------------------
+    // VALIDATE QR THROUGH GET
+    // -------------------------
+    function validateQR(qrText) {
+      const url = `${scriptURL}?qr=${encodeURIComponent(qrText)}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const result = document.getElementById("result");
+
+          if (data.status === "success") {
+            result.innerHTML = "✔ Check-In Successful!";
+            result.style.color = "green";
+          }
+          else if (data.status === "already") {
+            result.innerHTML = "⚠ Already Checked-In!";
+            result.style.color = "orange";
+          }
+          else if (data.status === "invalid") {
+            result.innerHTML = "❌ Invalid QR!";
+            result.style.color = "red";
+          }
+          else {
+            result.innerHTML = "❌ Server Error!";
+            result.style.color = "red";
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          result.innerHTML = "❌ Server Error!";
+          result.style.color = "red";
+        });
     }
-  })
-  .catch(err => {
-    result.innerHTML = "❌ Server Error!";
-    result.style.color = "red";
-    console.error(err);
-  });
-}
 
-
+    // -------------------------
+    // CAMERA SCAN
+    // -------------------------
     function startCamera() {
       try {
         if (html5QrCode) html5QrCode.stop();
@@ -102,41 +111,41 @@
         html5QrCode.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: 250 },
+
           (qrMessage) => {
             document.getElementById("result").innerHTML = "Scanned: " + qrMessage;
             html5QrCode.stop();
             validateQR(qrMessage);
           },
-          (errorMessage) => {
-            console.log("Scan error:", errorMessage);
-          }
+
+          (error) => console.log("Scan error:", error)
         );
       } catch (err) {
         alert("Camera Error: " + err);
       }
     }
 
+    // -------------------------
     // IMAGE UPLOAD SCAN
-    document.getElementById("uploadInput").addEventListener("change", function () {
+    // -------------------------
+    document.getElementById("uploadInput").addEventListener("change", async function () {
       if (!this.files.length) return;
+
       const file = this.files[0];
 
-      Html5Qrcode.scanFile(file, true)
-        .then(decoded => {
-          document.getElementById("result").innerHTML = "Scanned: " + decoded;
-          validateQR(decoded);
-        })
-        .catch(err => {
-          alert("Image Scan Error: " + err);
-        });
+      const qrScanner = new Html5Qrcode("reader");
+
+      try {
+        const decoded = await qrScanner.scanFile(file, true);
+
+        document.getElementById("result").innerHTML = "Scanned: " + decoded;
+        validateQR(decoded);
+
+      } catch (err) {
+        alert("Image Scan Error: " + err);
+      }
     });
   </script>
-
-  <script>
-window.onerror = function(msg, url, line) {
-    alert("JS Error: " + msg + "\nLine: " + line);
-};
-</script>
 
 </body>
 </html>
