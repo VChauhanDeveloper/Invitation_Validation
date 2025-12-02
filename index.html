@@ -60,32 +60,31 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbzloJ1lQfW2GaO_bd1GDLGERNij0lb4ZIDAVlkw_TfV1WuhjjWuDiF0fH210T0qL8Cqfw/exec";
+    const scriptURL = "https://script.google.com/macros/s/AKfycbztwazy-b3D7cHsERPtNmVnh9CpGvS2ssN_mF7FTVwmK0QyP7mNFNwWbLSSlFs1uzQJYA/exec";
     let html5QrCode;
 
-    function validateToken(token) {
-      const resultEl = document.getElementById("result");
-      resultEl.innerHTML = "Validating...";
-
-      fetch(scriptURL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // ✅ Send key as 'data' to match backend
-        body: JSON.stringify({ data: token })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "success") {
-          resultEl.style.color = "green";
-          resultEl.textContent = "✔ Check-In Successful!";
-        } else if (data.status === "already") {
-          resultEl.style.color = "orange";
-          resultEl.textContent = "⚠ Already Checked-In!";
-        } else {
-          resultEl.style.color = "red";
-          resultEl.textContent = "❌ Invalid Token!";
-        }
-      })
+   function validateQR(qrText) {
+  fetch(scriptURL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ qr: qrText })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "success") {
+      result.innerHTML = "✔ Check-In Successful!";
+      result.style.color = "green";
+    } else if (data.status === "already") {
+      result.innerHTML = "⚠ Already Checked-In!";
+      result.style.color = "orange";
+    } else if (data.status === "invalid") {
+      result.innerHTML = "❌ Invalid QR!";
+      result.style.color = "red";
+    } else {
+      result.innerHTML = "Server Error!";
+      result.style.color = "red";
+    }
+  })
       .catch(err => {
         resultEl.style.color = "red";
         resultEl.textContent = "Server Error!";
