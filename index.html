@@ -63,47 +63,41 @@
     const scriptURL = "https://script.google.com/macros/s/AKfycbztwazy-b3D7cHsERPtNmVnh9CpGvS2ssN_mF7FTVwmK0QyP7mNFNwWbLSSlFs1uzQJYA/exec";
     let html5QrCode;
 
-    // ===========================
-    // Validate QR From Backend
-    // ===========================
     function validateQR(qrText) {
-      const resultEl = document.getElementById("result");
-      resultEl.innerHTML = "Validating...";
-
       fetch(scriptURL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ qr: qrText })  // send QR value
+        body: JSON.stringify({ qr: qrText })   // QR VALUE SEND
       })
       .then(res => res.json())
       .then(data => {
+        const result = document.getElementById("result");
+
         if (data.status === "success") {
-          resultEl.style.color = "green";
-          resultEl.innerHTML = "✔ Check-In Successful!";
-        }
+          result.innerHTML = "✔ Check-In Successful!";
+          result.style.color = "green";
+        } 
         else if (data.status === "already") {
-          resultEl.style.color = "orange";
-          resultEl.innerHTML = "⚠ Already Checked-In!";
-        }
+          result.innerHTML = "⚠ Already Checked-In!";
+          result.style.color = "orange";
+        } 
         else if (data.status === "invalid") {
-          resultEl.style.color = "red";
-          resultEl.innerHTML = "❌ Invalid QR!";
-        }
+          result.innerHTML = "❌ Invalid QR!";
+          result.style.color = "red";
+        } 
         else {
-          resultEl.style.color = "red";
-          resultEl.innerHTML = "Server Error!";
+          result.innerHTML = "Server Error!";
+          result.style.color = "red";
         }
       })
       .catch(err => {
-        resultEl.style.color = "red";
-        resultEl.innerHTML = "Server Error!";
-        console.error(err);
+        const result = document.getElementById("result");
+        result.style.color = "red";
+        result.textContent = "Server Error!";
+        console.error("Fetch Error:", err);
       });
     }
 
-    // ===========================
-    // LIVE CAMERA SCANNER
-    // ===========================
     function startCamera() {
       try {
         if (html5QrCode) html5QrCode.stop();
@@ -113,26 +107,21 @@
         html5QrCode.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: 250 },
-
           (qrMessage) => {
             document.getElementById("result").innerHTML = "Scanned: " + qrMessage;
             html5QrCode.stop();
-            validateQR(qrMessage);   // FIXED
+            validateQR(qrMessage);
           },
-
           (errorMessage) => {
             console.log("Scan error:", errorMessage);
           }
         );
-
       } catch (err) {
         alert("Camera Error: " + err);
       }
     }
 
-    // ===========================
-    // SCAN IMAGE UPLOAD
-    // ===========================
+    // IMAGE UPLOAD SCAN
     document.getElementById("uploadInput").addEventListener("change", function () {
       if (!this.files.length) return;
       const file = this.files[0];
@@ -140,7 +129,7 @@
       Html5Qrcode.scanFile(file, true)
         .then(decoded => {
           document.getElementById("result").innerHTML = "Scanned: " + decoded;
-          validateQR(decoded);  // FIXED
+          validateQR(decoded);
         })
         .catch(err => {
           alert("Image Scan Error: " + err);
