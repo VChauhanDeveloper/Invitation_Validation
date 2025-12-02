@@ -60,43 +60,38 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbztwazy-b3D7cHsERPtNmVnh9CpGvS2ssN_mF7FTVwmK0QyP7mNFNwWbLSSlFs1uzQJYA/exec";
+    const scriptURL = "https://script.google.com/macros/s/AKfycbx0xzI1Mn5qg09EPXpv85K8zMzdfJDSfMJ5AeR5nnhXTeAZj1Ut3QWvCGUxpi9BBSNEqg/exec";
     let html5QrCode;
 
-    function validateQR(qrText) {
-      fetch(scriptURL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ qr: qrText })   // QR VALUE SEND
-      })
-      .then(res => res.json())
-      .then(data => {
-        const result = document.getElementById("result");
-
-        if (data.status === "success") {
-          result.innerHTML = "✔ Check-In Successful!";
-          result.style.color = "green";
-        } 
-        else if (data.status === "already") {
-          result.innerHTML = "⚠ Already Checked-In!";
-          result.style.color = "orange";
-        } 
-        else if (data.status === "invalid") {
-          result.innerHTML = "❌ Invalid QR!";
-          result.style.color = "red";
-        } 
-        else {
-          result.innerHTML = "Server Error!";
-          result.style.color = "red";
-        }
-      })
-      .catch(err => {
-        const result = document.getElementById("result");
-        result.style.color = "red";
-        result.textContent = "Server Error!";
-        console.error("Fetch Error:", err);
-      });
+   function validateQR(qrText) {
+  fetch(scriptURL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ qr: qrText })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "success") {
+      result.innerHTML = "✔ Check-In Successful!";
+      result.style.color = "green";
+    } else if (data.status === "already") {
+      result.innerHTML = "⚠ Already Checked-In!";
+      result.style.color = "orange";
+    } else if (data.status === "invalid") {
+      result.innerHTML = "❌ Invalid QR!";
+      result.style.color = "red";
+    } else {
+      result.innerHTML = "❌ Server Error!";
+      result.style.color = "red";
     }
+  })
+  .catch(err => {
+    result.innerHTML = "❌ Server Error!";
+    result.style.color = "red";
+    console.error(err);
+  });
+}
+
 
     function startCamera() {
       try {
